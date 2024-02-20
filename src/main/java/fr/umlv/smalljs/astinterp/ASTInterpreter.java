@@ -1,18 +1,7 @@
 package fr.umlv.smalljs.astinterp;
 
 import fr.umlv.smalljs.ast.Expr;
-import fr.umlv.smalljs.ast.Expr.Block;
-import fr.umlv.smalljs.ast.Expr.FieldAccess;
-import fr.umlv.smalljs.ast.Expr.FieldAssignment;
-import fr.umlv.smalljs.ast.Expr.Fun;
-import fr.umlv.smalljs.ast.Expr.FunCall;
-import fr.umlv.smalljs.ast.Expr.If;
-import fr.umlv.smalljs.ast.Expr.Literal;
-import fr.umlv.smalljs.ast.Expr.LocalVarAccess;
-import fr.umlv.smalljs.ast.Expr.LocalVarAssignment;
-import fr.umlv.smalljs.ast.Expr.MethodCall;
-import fr.umlv.smalljs.ast.Expr.New;
-import fr.umlv.smalljs.ast.Expr.Return;
+import fr.umlv.smalljs.ast.Expr.*;
 import fr.umlv.smalljs.ast.Script;
 import fr.umlv.smalljs.rt.Failure;
 import fr.umlv.smalljs.rt.JSObject;
@@ -23,8 +12,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static fr.umlv.smalljs.rt.JSObject.UNDEFINED;
 import static java.util.stream.Collectors.joining;
@@ -43,7 +30,7 @@ public class ASTInterpreter {
                 //throw new UnsupportedOperationException("TODO Block");
                 // TODO loop over all instructions
                 for (var instr : instrs) {
-                        visit(instr, env);
+                    visit(instr, env);
                 }
                 yield UNDEFINED;
             }
@@ -107,23 +94,26 @@ public class ASTInterpreter {
             }
             case If(Expr condition, Block trueBlock, Block falseBlock, int lineNumber) -> {
                 var value = visit(condition, env);
-                if (value == UNDEFINED || value instanceof Integer n && n == 0){
+                if (value == UNDEFINED || value instanceof Integer n && n == 0) {
                     yield visit(falseBlock, env);
                 } else {
                     yield visit(trueBlock, env);
                 }
             }
             case New(Map<String, Expr> initMap, int lineNumber) -> {
-                throw new UnsupportedOperationException("TODO New");
-//                initMap.entrySet().stream().map(
-//                        entry -> Map.entry(entry.getKey(), visit(entry.getValue(), env))
-//                )
+                var jsObject = JSObject.newObject(null);
+                for (var entry : initMap.entrySet()) {
+                    jsObject.register(entry.getKey(), visit(entry.getValue(), env));
+                }
+                yield jsObject;
             }
             case FieldAccess(Expr receiver, String name, int lineNumber) -> {
-                throw new UnsupportedOperationException("TODO FieldAccess");
+                yield asJSObject(visit(receiver, env), lineNumber).lookup(name);
             }
             case FieldAssignment(Expr receiver, String name, Expr expr, int lineNumber) -> {
-                throw new UnsupportedOperationException("TODO FieldAssignment");
+                var value = visit(expr, env);
+                asJSObject(visit(receiver, env), lineNumber).register(name, value);
+                yield value;
             }
             case MethodCall(Expr receiver, String name, List<Expr> args, int lineNumber) -> {
                 throw new UnsupportedOperationException("TODO MethodCall");

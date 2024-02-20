@@ -300,7 +300,7 @@ public class ASTInterpreterTests {
                 print(o);
                 """));
   }
-  /*
+
   @Tag("Q14") @Test
   public void createAnObjectFromAVariableValue() {
     assertEquals("""
@@ -388,5 +388,4 @@ public class ASTInterpreterTests {
                 object.foo(42);
                 """));
   }
-  */
 }
